@@ -1,22 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"os"
+
+	run "github.com/microcks/microcks-testcontainers-go-demo/cmd/run"
 )
 
 func main() {
-	// Initialize your application
-	fmt.Println("Starting Microcks TestContainers Go Demo application...")
-
-	// Define your HTTP routes
-	http.HandleFunc("/", handler)
-
-	// Start your HTTP server
-	http.ListenAndServe(":9000", nil)
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	// Your HTTP request handler logic goes here
-	fmt.Fprintf(w, "Hello, World!")
+	pastryAPIBaseURL, present := os.LookupEnv("PASTRY_API_URL")
+	if !present {
+		pastryAPIBaseURL = "http://localhost:9090/rest/API+Pastries/0.0.1"
+	}
+	run.Run(pastryAPIBaseURL)
 }

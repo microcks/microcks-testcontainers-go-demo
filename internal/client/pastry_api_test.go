@@ -11,9 +11,7 @@ import (
 	microcks "microcks.io/testcontainers-go"
 )
 
-func setup(t *testing.T) *microcks.MicrocksContainer {
-	ctx := context.Background()
-
+func setup(ctx context.Context, t *testing.T) *microcks.MicrocksContainer {
 	microcksContainer, err := microcks.RunContainer(ctx,
 		testcontainers.WithImage("quay.io/microcks/microcks-uber:1.9.0-native"),
 		microcks.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
@@ -30,8 +28,7 @@ func setup(t *testing.T) *microcks.MicrocksContainer {
 
 func TestGetPastry(t *testing.T) {
 	ctx := context.Background()
-
-	microcksContainer := setup(t)
+	microcksContainer := setup(ctx, t)
 
 	baseApiUrl, err := microcksContainer.RestMockEndpoint(ctx, "API Pastries", "0.0.1")
 	require.NoError(t, err)
@@ -55,8 +52,7 @@ func TestGetPastry(t *testing.T) {
 
 func TestListPastries(t *testing.T) {
 	ctx := context.Background()
-
-	microcksContainer := setup(t)
+	microcksContainer := setup(ctx, t)
 
 	baseApiUrl, err := microcksContainer.RestMockEndpoint(ctx, "API Pastries", "0.0.1")
 	require.NoError(t, err)
