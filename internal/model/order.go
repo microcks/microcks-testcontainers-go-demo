@@ -25,3 +25,9 @@ type Order struct {
 	Id     string `json:"id"`
 	Status Status `json:"status"`
 }
+
+type OrderEvent struct {
+	Timestamp    int64  `json:"timestamp"`
+	Order        Order  `json:"order"`
+	ChangeReason string `json:"changeReason"`
+}

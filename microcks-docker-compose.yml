@@ -9,7 +9,7 @@ services:
     entrypoint:
       - microcks-cli
       - import
-      - '/resources/apipastries-openapi.yaml:true,/resources/apipastries-postman-collection.json:false'
+      - '/resources/order-events-asyncapi.yaml:true,/resources/apipastries-openapi.yaml:true,/resources/apipastries-postman-collection.json:false'
       - --microcksURL=http://microcks:8080/api
       - --insecure
       - --keycloakClientId=foo
