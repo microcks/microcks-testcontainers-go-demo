@@ -19,9 +19,14 @@ In another terminal, run the application:
 $ go run cmd/main.go
 ==== OUTPUT ====
 Starting Microcks TestContainers Go Demo application...
-%4|1717762091.102|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
-%4|1717762091.102|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
-Consumed event from topic OrderEventsAPI-0.1.0-orders-reviewed: key = 1717760701042 value = {"timestamp":1706087114133,"order":{"id":"123-456-789","customerId":"lbroudoux","status":"VALIDATED","productQuantities":[{"productName":"Croissant","quantity":1},{"productName":"Pain Chocolat","quantity":1}],"totalPrice":4.2},"changeReason":"Validation"}
+  Connecting to Kafka server: localhost:9092 
+  Connecting to Microcks Pastries: http://localhost:9090/rest/API+Pastries/0.0.1 
+%4|1725661943.865|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
+%4|1725661943.866|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
+Microcks TestContainers Go Demo application is listening on localhost:9000
+
+Consumed event from topic OrderEventsAPI-0.1.0-orders-reviewed: key = 1725661947312 value = {"timestamp":1706087114133,"order":{"id":"123-456-789","customerId":"lbroudoux","status":"VALIDATED","productQuantities":[{"productName":"Croissant","quantity":1},{"productName":"Pain Chocolat","quantity":1}],"totalPrice":4.2},"changeReason":"Validation"}
+Order '123-456-789' has been updated after review
 [...]
 ```
 
@@ -30,7 +35,7 @@ In a third terminal, call the API:
 _Successful call_
 
 ```sh
-$ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \ 
+$ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
     -d '{"customerId": "lbroudoux", "productQuantities": [{"productName": "Millefeuille", "quantity": 1}], "totalPrice": 5.1}' -s | jq .
 ==== OUTPUT ====
 {
@@ -50,7 +55,7 @@ $ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
 _Error call_
 
 ```sh
-$ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \ 
+$ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
     -d '{"customerId": "lbroudoux", "productQuantities": [{"productName": "Eclair Chocolat", "quantity": 1}], "totalPrice": 5.1}' -s | jq .
 ==== OUTPUT ====
 {
@@ -85,7 +90,7 @@ ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     
 ```
 
 ```sh
-go test -timeout 30s -run ^TestListPastries$ github.com/microcks/microcks-testcontainers-go-demo/internal/client
+$ go test -timeout 30s -run ^TestListPastries$ github.com/microcks/microcks-testcontainers-go-demo/internal/client
 
 === RUN   TestListPastries
 2024/06/07 09:14:46 🐳 Creating container for image testcontainers/ryuk:0.7.0
@@ -105,4 +110,10 @@ go test -timeout 30s -run ^TestListPastries$ github.com/microcks/microcks-testco
 --- PASS: TestListPastries (1.22s)
 PASS
 ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     (cached)
+```
+
+```sh
+$ go test -timeout 30s -run ^TestOpenAPIContractBasic$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
+
+$ go test -timeout 30s -run ^TestOpenAPIContractAdvanced$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
 ```

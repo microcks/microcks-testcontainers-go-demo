@@ -64,7 +64,7 @@ func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			os.Exit(1)
 		}
 	} else {
-		// Serialize order to JSON and write response
+		// Serialize order to JSON and write response.
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(order)

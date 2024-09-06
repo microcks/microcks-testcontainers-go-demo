@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -49,11 +50,15 @@ func Run(applicationProperties app.ApplicationProperties) {
 	}()
 
 	kafkaServer, err := applicationProperties.KafkaConfigMap.Get("bootstrap.servers", "unknown")
-	fmt.Printf("%s", kafkaServer)
+	if err != nil {
+		fmt.Println("No bootstrap.servers specified for KafkaServer", err)
+		os.Exit(1)
+	}
 
 	// Initialize your application
 	fmt.Println("Starting Microcks TestContainers Go Demo application...")
-	fmt.Println("  Connecting to Kafka server")
+	fmt.Printf("  Connecting to Kafka server: %s \n", kafkaServer)
+	fmt.Printf("  Connecting to Microcks Pastries: %s \n", applicationProperties.PastriesBaseUrl)
 
 	// Prepare Kafka components we need.
 	kafkaConsumer, err := kafka.NewConsumer(applicationProperties.KafkaConfigMap)
@@ -68,7 +73,7 @@ func Run(applicationProperties app.ApplicationProperties) {
 	}
 
 	// Prepare our own components and services.
-	pastryAPIClient := client.NewPastryAPIClient(applicationProperties.PastriesBaseUrl)
+	pastryAPIClient := client.NewPastryAPIClient(strings.Replace(applicationProperties.PastriesBaseUrl, " ", "+", -1))
 	orderPublisher := service.NewOrderEventPublisher(kafkaProducer, applicationProperties.OrderEventsCreatedTopic)
 	orderService := service.NewOrderService(pastryAPIClient, orderPublisher)
 	orderController := controller.NewOrderController(orderService)
@@ -87,6 +92,8 @@ func Run(applicationProperties app.ApplicationProperties) {
 	http.HandleFunc("/api/orders", orderController.CreateOrder)
 
 	// Start your HTTP server
+	fmt.Println("Microcks TestContainers Go Demo application is listening on localhost:9000")
+	fmt.Println("")
 	http.ListenAndServe(":9000", nil)
 
 	<-close

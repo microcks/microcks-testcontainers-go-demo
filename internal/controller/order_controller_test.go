@@ -17,6 +17,7 @@ package controller_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -25,16 +26,16 @@ import (
 	app "github.com/microcks/microcks-testcontainers-go-demo/internal"
 	"github.com/stretchr/testify/require"
 	testcontainers "github.com/testcontainers/testcontainers-go"
-	tcKafka "github.com/testcontainers/testcontainers-go/modules/kafka"
+	kafkaTC "github.com/testcontainers/testcontainers-go/modules/kafka"
 	"github.com/testcontainers/testcontainers-go/network"
 	client "microcks.io/go-client"
-	microcks "microcks.io/testcontainers-go"
 	ensemble "microcks.io/testcontainers-go/ensemble"
 )
 
+/*
 func setup(ctx context.Context, t *testing.T) *microcks.MicrocksContainer {
-	microcksContainer, err := microcks.RunContainer(ctx,
-		testcontainers.WithImage("quay.io/microcks/microcks-uber:1.9.1-native"),
+	microcksContainer, err := microcks.Run(ctx,
+		"quay.io/microcks/microcks-uber:1.10.0-native",
 		microcks.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
 		microcks.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
 		microcks.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
@@ -49,7 +50,7 @@ func setup(ctx context.Context, t *testing.T) *microcks.MicrocksContainer {
 	return microcksContainer
 }
 
-func TestOpenAPIContractOld(t *testing.T) {
+func TestOpenAPIContractBasic(t *testing.T) {
 	ctx := context.Background()
 	microcksContainer := setup(ctx, t)
 
@@ -77,6 +78,7 @@ func TestOpenAPIContractOld(t *testing.T) {
 	require.True(t, testResult.Success)
 	require.Equal(t, 1, len(*testResult.TestCaseResults))
 }
+*/
 
 func setupEnsemble(ctx context.Context, t *testing.T, net *testcontainers.DockerNetwork) *ensemble.MicrocksContainersEnsemble {
 	microcksEnsemble, err := ensemble.RunContainers(ctx,
@@ -84,6 +86,7 @@ func setupEnsemble(ctx context.Context, t *testing.T, net *testcontainers.Docker
 		ensemble.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
 		ensemble.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
 		ensemble.WithPostman(true),
+		//ensemble.WithNetwork(net),
 		//ensemble.WithDefaultNetwork(),
 		ensemble.WithHostAccessPorts([]int{server.DefaultApplicationPort}),
 	)
@@ -96,7 +99,7 @@ func setupEnsemble(ctx context.Context, t *testing.T, net *testcontainers.Docker
 	return microcksEnsemble
 }
 
-func TestOpenAPIContract(t *testing.T) {
+func TestOpenAPIContractAdvanced(t *testing.T) {
 	ctx := context.Background()
 
 	// Common network and Kafka container.
@@ -106,8 +109,8 @@ func TestOpenAPIContract(t *testing.T) {
 		return
 	}
 
-	kafkaContainer, err := tcKafka.RunContainer(ctx,
-		testcontainers.WithImage("confluentinc/confluent-local:7.5.0"),
+	kafkaContainer, err := kafkaTC.Run(ctx,
+		"confluentinc/confluent-local:7.5.0",
 		network.WithNetwork([]string{"kafka"}, net),
 	)
 	t.Cleanup(func() {
@@ -153,11 +156,9 @@ func TestOpenAPIContract(t *testing.T) {
 
 	t.Logf("Test Result success is %t", testResult.Success)
 
-	/*
-		// Log TestResult raw structure.
-		j, err := json.Marshal(testResult)
-		t.Logf(string(j))
-	*/
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	t.Logf(string(j))
 
 	require.True(t, testResult.Success)
 	require.Equal(t, 1, len(*testResult.TestCaseResults))
@@ -173,8 +174,8 @@ func TestPostmanCollectionContract(t *testing.T) {
 		return
 	}
 
-	kafkaContainer, err := tcKafka.RunContainer(ctx,
-		testcontainers.WithImage("confluentinc/confluent-local:7.5.0"),
+	kafkaContainer, err := kafkaTC.Run(ctx,
+		"confluentinc/confluent-local:7.5.0",
 		network.WithNetwork([]string{"kafka"}, net),
 	)
 	t.Cleanup(func() {
