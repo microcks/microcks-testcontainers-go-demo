@@ -82,7 +82,7 @@ func Run(applicationProperties app.ApplicationProperties) {
 	orderListener := service.NewOrderEventListener(kafkaConsumer, applicationProperties.OrderEventsReviewedTopic, orderService)
 	err = orderListener.Listen()
 	if err != nil {
-		fmt.Println("Error while starting consumling orders reviews", err)
+		fmt.Println("Error while starting consuming orders reviews", err)
 		os.Exit(1)
 	}
 

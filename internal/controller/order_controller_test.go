@@ -32,62 +32,13 @@ import (
 	ensemble "microcks.io/testcontainers-go/ensemble"
 )
 
-/*
-func setup(ctx context.Context, t *testing.T) *microcks.MicrocksContainer {
-	microcksContainer, err := microcks.Run(ctx,
-		"quay.io/microcks/microcks-uber:1.10.0-native",
-		microcks.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
-		microcks.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
-		microcks.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
-		microcks.WithHostAccessPorts([]int{server.DefaultApplicationPort}),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		if err := microcksContainer.Terminate(ctx); err != nil {
-			t.Fatalf("failed to terminate container: %s", err)
-		}
-	})
-	return microcksContainer
-}
-
-func TestOpenAPIContractBasic(t *testing.T) {
-	ctx := context.Background()
-	microcksContainer := setup(ctx, t)
-
-	baseApiUrl, err := microcksContainer.RestMockEndpoint(ctx, "API Pastries", "0.0.1")
-	require.NoError(t, err)
-
-	applicationProperties := &app.ApplicationProperties{
-		PastriesBaseUrl: baseApiUrl,
-	}
-
-	go server.Run(*applicationProperties)
-	defer server.Close()
-
-	testRequest := client.TestRequest{
-		ServiceId:    "Order Service API:0.1.0",
-		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
-		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
-		Timeout:      2000,
-	}
-	testResult, err := microcksContainer.TestEndpoint(ctx, &testRequest)
-	require.NoError(t, err)
-
-	t.Logf("Test Result success is %t", testResult.Success)
-
-	require.True(t, testResult.Success)
-	require.Equal(t, 1, len(*testResult.TestCaseResults))
-}
-*/
-
 func setupEnsemble(ctx context.Context, t *testing.T, net *testcontainers.DockerNetwork) *ensemble.MicrocksContainersEnsemble {
 	microcksEnsemble, err := ensemble.RunContainers(ctx,
 		ensemble.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
 		ensemble.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
 		ensemble.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
 		ensemble.WithPostman(true),
-		//ensemble.WithNetwork(net),
-		//ensemble.WithDefaultNetwork(),
+		ensemble.WithNetwork(net),
 		ensemble.WithHostAccessPorts([]int{server.DefaultApplicationPort}),
 	)
 	require.NoError(t, err)
@@ -220,11 +171,9 @@ func TestPostmanCollectionContract(t *testing.T) {
 
 	t.Logf("Test Result success is %t", testResult.Success)
 
-	/*
-		// Log TestResult raw structure.
-		j, err := json.Marshal(testResult)
-		t.Logf(string(j))
-	*/
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	t.Logf(string(j))
 
 	require.True(t, testResult.Success)
 	require.Equal(t, 1, len(*testResult.TestCaseResults))

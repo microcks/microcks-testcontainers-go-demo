@@ -26,7 +26,11 @@ import (
 	"github.com/microcks/microcks-testcontainers-go-demo/internal/service"
 )
 
-type OrderController struct {
+type OrderController interface {
+	CreateOrder(w http.ResponseWriter, r *http.Request)
+}
+
+type orderController struct {
 	service service.OrderService
 }
 
@@ -35,13 +39,13 @@ type unavailableProduct struct {
 	Details     string `json:"details"`
 }
 
-func NewOrderController(service service.OrderService) *OrderController {
-	return &OrderController{
+func NewOrderController(service service.OrderService) OrderController {
+	return &orderController{
 		service: service,
 	}
 }
 
-func (oc *OrderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
+func (oc *orderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	// Read OrderInfo from body.
 	defer r.Body.Close()
 	body, _ := io.ReadAll(r.Body)
