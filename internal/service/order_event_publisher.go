@@ -56,7 +56,7 @@ func (oep *orderEventPublisher) PublishOrderEvent(event *model.OrderEvent) (*mod
 	}, nil)
 
 	numMsg := oep.kafkaProducer.Flush(50)
-	fmt.Println("Send " + string(rune(numMsg)) + " Kafka messages")
+	fmt.Println("Send", numMsg, "Kafka messages")
 
 	return event, nil
 }

@@ -113,7 +113,9 @@ ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     
 ```
 
 ```sh
-$ go test -timeout 30s -run ^TestOpenAPIContractBasic$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
-
 $ go test -timeout 30s -run ^TestOpenAPIContractAdvanced$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
+
+$ go test -timeout 30s -run ^TestPostmanCollectionContract$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
+
+$ go test -timeout 30s -run ^TestOrderEventIsPublishedWhenOrderIsCreated$ github.com/microcks/microcks-testcontainers-go-demo/internal/service -v
 ```

@@ -2,6 +2,8 @@ module github.com/microcks/microcks-testcontainers-go-demo
 
 go 1.22.0
 
+//replace microcks.io/testcontainers-go => ../microcks-testcontainers-go
+
 require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.5.3
 	github.com/google/uuid v1.6.0
@@ -9,7 +11,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.33.1-0.20240903122610-cf51ec77b031
 	github.com/testcontainers/testcontainers-go/modules/kafka v0.33.0
 	microcks.io/go-client v0.2.0
-	microcks.io/testcontainers-go v0.1.1-0.20240906213154-6351c984c099
+	microcks.io/testcontainers-go v0.1.1-0.20240923123243-301b3398e662
 )
 
 require (

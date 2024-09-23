@@ -37,7 +37,7 @@ const (
 
 var close chan bool
 
-func Run(applicationProperties app.ApplicationProperties) {
+func Run(applicationProperties app.ApplicationProperties, applicationServices chan app.ApplicationServices) {
 	// Setup signal hooks.
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -85,6 +85,12 @@ func Run(applicationProperties app.ApplicationProperties) {
 		fmt.Println("Error while starting consuming orders reviews", err)
 		os.Exit(1)
 	}
+
+	// Provide ApplicationServices to exernal caller.
+	services := app.ApplicationServices{
+		OrderService: orderService,
+	}
+	applicationServices <- services // service to channel
 
 	// Define your HTTP routes
 	http.HandleFunc("/", handler)
