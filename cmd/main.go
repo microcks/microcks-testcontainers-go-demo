@@ -44,6 +44,7 @@ func main() {
 			"auto.offset.reset": "latest",
 		},
 	}
-
-	run.Run(*applicationProperties)
+	
+        appServicesChan := make(chan internal.ApplicationServices)
+	run.Run(*applicationProperties, appServicesChan)
 }
