@@ -67,49 +67,69 @@ $ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
 ## Running tests
 
 ```sh
-$ go test -timeout 30s -run "^TestGetPastry$" ./internal/client
+$ go test -timeout 30s -run "^TestGetPastry$" ./internal/client -v
 
 === RUN   TestGetPastry
-2024/06/07 09:14:32 🐳 Creating container for image testcontainers/ryuk:0.7.0
-2024/06/07 09:14:32 ✅ Container created: 409c6c59e370
-2024/06/07 09:14:32 🐳 Starting container: 409c6c59e370
-2024/06/07 09:14:33 ✅ Container started: 409c6c59e370
-2024/06/07 09:14:33 🚧 Waiting for container id 409c6c59e370 image: testcontainers/ryuk:0.7.0. Waiting for: &{Port:8080/tcp timeout:<nil> PollInterval:100ms}
-2024/06/07 09:14:33 🔔 Container is ready: 409c6c59e370
-2024/06/07 09:14:33 🐳 Creating container for image quay.io/microcks/microcks-uber:1.9.0-native
-2024/06/07 09:14:33 ✅ Container created: 5bc535cc9b57
-2024/06/07 09:14:33 🐳 Starting container: 5bc535cc9b57
-2024/06/07 09:14:33 ✅ Container started: 5bc535cc9b57
-2024/06/07 09:14:33 🚧 Waiting for container id 5bc535cc9b57 image: quay.io/microcks/microcks-uber:1.9.0-native. Waiting for: &{timeout:<nil> Log:Started MicrocksApplication IsRegexp:false Occurrence:1 PollInterval:100ms}
-2024/06/07 09:14:35 🔔 Container is ready: 5bc535cc9b57
-2024/06/07 09:14:35 🐳 Terminating container: 5bc535cc9b57
-2024/06/07 09:14:35 🚫 Container terminated: 5bc535cc9b57
---- PASS: TestGetPastry (3.46s)
+2024/09/25 22:05:32 github.com/testcontainers/testcontainers-go - Connected to docker: 
+  Server Version: 24.0.2
+  API Version: 1.43
+  Operating System: Docker Desktop
+  Total Memory: 11962 MB
+  Testcontainers for Go Version: v0.34.0
+  Resolved Docker Host: unix:///var/run/docker.sock
+  Resolved Docker Socket Path: /var/run/docker.sock
+  Test SessionID: 1b0461d7b7d13ee30ffb86fc72d836fcc9d8ae715fb0407d2af3f4e088d26657
+  Test ProcessID: 7629b56f-618d-4c6d-a37d-37ea9b7d6e56
+2024/09/25 22:05:32 🐳 Creating container for image testcontainers/ryuk:0.9.0
+2024/09/25 22:05:32 ✅ Container created: c23103c472eb
+2024/09/25 22:05:32 🐳 Starting container: c23103c472eb
+2024/09/25 22:05:32 ✅ Container started: c23103c472eb
+2024/09/25 22:05:32 ⏳ Waiting for container id c23103c472eb image: testcontainers/ryuk:0.9.0. Waiting for: &{Port:8080/tcp timeout:<nil> PollInterval:100ms skipInternalCheck:false}
+2024/09/25 22:05:32 🔔 Container is ready: c23103c472eb
+2024/09/25 22:05:32 🐳 Creating container for image quay.io/microcks/microcks-uber:1.9.0-native
+2024/09/25 22:05:32 ✅ Container created: 77ddd018ca5f
+2024/09/25 22:05:32 🐳 Starting container: 77ddd018ca5f
+2024/09/25 22:05:32 ✅ Container started: 77ddd018ca5f
+2024/09/25 22:05:32 ⏳ Waiting for container id 77ddd018ca5f image: quay.io/microcks/microcks-uber:1.9.0-native. Waiting for: &{timeout:<nil> Log:Started MicrocksApplication IsRegexp:false Occurrence:1 PollInterval:100ms}
+2024/09/25 22:05:33 🔔 Container is ready: 77ddd018ca5f
+2024/09/25 22:05:33 🐳 Terminating container: 77ddd018ca5f
+2024/09/25 22:05:33 🚫 Container terminated: 77ddd018ca5f
+--- PASS: TestGetPastry (1.61s)
 PASS
-ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     (cached)
+ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     1.940s
 ```
 
 ```sh
-$ go test -timeout 30s -run "^TestListPastries$" ./internal/client
+$ go test -timeout 30s -run "^TestListPastries$" ./internal/client -v
 
 === RUN   TestListPastries
-2024/06/07 09:14:46 🐳 Creating container for image testcontainers/ryuk:0.7.0
-2024/06/07 09:14:46 ✅ Container created: 7260f7bb8990
-2024/06/07 09:14:46 🐳 Starting container: 7260f7bb8990
-2024/06/07 09:14:46 ✅ Container started: 7260f7bb8990
-2024/06/07 09:14:46 🚧 Waiting for container id 7260f7bb8990 image: testcontainers/ryuk:0.7.0. Waiting for: &{Port:8080/tcp timeout:<nil> PollInterval:100ms}
-2024/06/07 09:14:47 🔔 Container is ready: 7260f7bb8990
-2024/06/07 09:14:47 🐳 Creating container for image quay.io/microcks/microcks-uber:1.9.0-native
-2024/06/07 09:14:47 ✅ Container created: 7ae147635552
-2024/06/07 09:14:47 🐳 Starting container: 7ae147635552
-2024/06/07 09:14:47 ✅ Container started: 7ae147635552
-2024/06/07 09:14:47 🚧 Waiting for container id 7ae147635552 image: quay.io/microcks/microcks-uber:1.9.0-native. Waiting for: &{timeout:<nil> Log:Started MicrocksApplication IsRegexp:false Occurrence:1 PollInterval:100ms}
-2024/06/07 09:14:47 🔔 Container is ready: 7ae147635552
-2024/06/07 09:14:47 🐳 Terminating container: 7ae147635552
-2024/06/07 09:14:47 🚫 Container terminated: 7ae147635552
---- PASS: TestListPastries (1.22s)
+2024/09/25 22:05:00 github.com/testcontainers/testcontainers-go - Connected to docker: 
+  Server Version: 24.0.2
+  API Version: 1.43
+  Operating System: Docker Desktop
+  Total Memory: 11962 MB
+  Testcontainers for Go Version: v0.34.0
+  Resolved Docker Host: unix:///var/run/docker.sock
+  Resolved Docker Socket Path: /var/run/docker.sock
+  Test SessionID: 96332d7af971d08d478592eca13f0c15f30f89ee17251b870f732595e9f5f341
+  Test ProcessID: bfbf6820-0924-4e6a-b6f9-9eeb5f677ac5
+2024/09/25 22:05:00 🐳 Creating container for image testcontainers/ryuk:0.9.0
+2024/09/25 22:05:00 ✅ Container created: eb0f86cd914d
+2024/09/25 22:05:00 🐳 Starting container: eb0f86cd914d
+2024/09/25 22:05:00 ✅ Container started: eb0f86cd914d
+2024/09/25 22:05:00 ⏳ Waiting for container id eb0f86cd914d image: testcontainers/ryuk:0.9.0. Waiting for: &{Port:8080/tcp timeout:<nil> PollInterval:100ms skipInternalCheck:false}
+2024/09/25 22:05:00 🔔 Container is ready: eb0f86cd914d
+2024/09/25 22:05:00 🐳 Creating container for image quay.io/microcks/microcks-uber:1.9.0-native
+2024/09/25 22:05:00 ✅ Container created: a7f410f91fb2
+2024/09/25 22:05:00 🐳 Starting container: a7f410f91fb2
+2024/09/25 22:05:01 ✅ Container started: a7f410f91fb2
+2024/09/25 22:05:01 ⏳ Waiting for container id a7f410f91fb2 image: quay.io/microcks/microcks-uber:1.9.0-native. Waiting for: &{timeout:<nil> Log:Started MicrocksApplication IsRegexp:false Occurrence:1 PollInterval:100ms}
+2024/09/25 22:05:01 🔔 Container is ready: a7f410f91fb2
+2024/09/25 22:05:01 🐳 Terminating container: a7f410f91fb2
+2024/09/25 22:05:01 🚫 Container terminated: a7f410f91fb2
+--- PASS: TestListPastries (1.27s)
 PASS
-ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     (cached)
+ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     1.586s
 ```
 
 ```sh
@@ -118,4 +138,6 @@ $ go test -timeout 30s -run "^TestOpenAPIContractAdvanced$" ./internal/controlle
 $ go test -timeout 30s -run "^TestPostmanCollectionContract$" ./internal/controller -v
 
 $ go test -timeout 30s -run "^TestOrderEventIsPublishedWhenOrderIsCreated$" ./internal/service -v
+
+#$ go test -timeout 30s -run "^TestEventIsConsumedAndProcessedByService$" ./internal/service -v
 ```

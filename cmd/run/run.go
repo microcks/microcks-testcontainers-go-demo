@@ -16,6 +16,7 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -100,10 +101,14 @@ func Run(applicationProperties app.ApplicationProperties, applicationServices ch
 	// Start your HTTP server
 	fmt.Println("Microcks TestContainers Go Demo application is listening on localhost:9000")
 	fmt.Println("")
-	http.ListenAndServe(":9000", nil)
+
+	//go http.ListenAndServe(":9000", nil)
+	server := &http.Server{Addr: ":9000", Handler: nil}
+	err = server.ListenAndServe()
 
 	<-close
 	orderListener.Stop()
+	server.Shutdown(context.Background())
 	fmt.Println("Exiting Microcks TestContainers Go Demo application.")
 }
 

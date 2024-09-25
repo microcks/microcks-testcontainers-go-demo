@@ -16,12 +16,17 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	run "github.com/microcks/microcks-testcontainers-go-demo/cmd/run"
 	internal "github.com/microcks/microcks-testcontainers-go-demo/internal"
 )
+
+var close chan bool
 
 func main() {
 	pastryAPIBaseURL, present := os.LookupEnv("PASTRY_API_URL")
@@ -44,7 +49,22 @@ func main() {
 			"auto.offset.reset": "latest",
 		},
 	}
-	
-        appServicesChan := make(chan internal.ApplicationServices)
-	run.Run(*applicationProperties, appServicesChan)
+
+	appServicesChan := make(chan internal.ApplicationServices)
+	go run.Run(*applicationProperties, appServicesChan)
+	_ = <-appServicesChan
+
+	// Setup signal hooks.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	close = make(chan bool, 1)
+
+	go func() {
+		sig := <-sigs
+		fmt.Println("Caught signal " + sig.String())
+		close <- true
+	}()
+
+	<-close
+	fmt.Println("Exiting Microcks TestContainers Go Demo application main.")
 }
