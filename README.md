@@ -19,8 +19,8 @@ In another terminal, run the application:
 $ go run cmd/main.go
 ==== OUTPUT ====
 Starting Microcks TestContainers Go Demo application...
-  Connecting to Kafka server: localhost:9092 
-  Connecting to Microcks Pastries: http://localhost:9090/rest/API+Pastries/0.0.1 
+  Connecting to Kafka server: localhost:9092
+  Connecting to Microcks Pastries: http://localhost:9090/rest/API+Pastries/0.0.1
 %4|1725661943.865|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
 %4|1725661943.866|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
 Microcks TestContainers Go Demo application is listening on localhost:9000
@@ -67,7 +67,7 @@ $ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
 ## Running tests
 
 ```sh
-$ go test -timeout 30s -run ^TestGetPastry$ github.com/microcks/microcks-testcontainers-go-demo/internal/client
+$ go test -timeout 30s -run "^TestGetPastry$" ./internal/client
 
 === RUN   TestGetPastry
 2024/06/07 09:14:32 🐳 Creating container for image testcontainers/ryuk:0.7.0
@@ -90,7 +90,7 @@ ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     
 ```
 
 ```sh
-$ go test -timeout 30s -run ^TestListPastries$ github.com/microcks/microcks-testcontainers-go-demo/internal/client
+$ go test -timeout 30s -run "^TestListPastries$" ./internal/client
 
 === RUN   TestListPastries
 2024/06/07 09:14:46 🐳 Creating container for image testcontainers/ryuk:0.7.0
@@ -113,9 +113,9 @@ ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     
 ```
 
 ```sh
-$ go test -timeout 30s -run ^TestOpenAPIContractAdvanced$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
+$ go test -timeout 30s -run "^TestOpenAPIContractAdvanced$" ./internal/controller -v
 
-$ go test -timeout 30s -run ^TestPostmanCollectionContract$ github.com/microcks/microcks-testcontainers-go-demo/internal/controller -v
+$ go test -timeout 30s -run "^TestPostmanCollectionContract$" ./internal/controller -v
 
-$ go test -timeout 30s -run ^TestOrderEventIsPublishedWhenOrderIsCreated$ github.com/microcks/microcks-testcontainers-go-demo/internal/service -v
+$ go test -timeout 30s -run "^TestOrderEventIsPublishedWhenOrderIsCreated$" ./internal/service -v
 ```
