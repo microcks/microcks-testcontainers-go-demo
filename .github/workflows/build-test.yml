@@ -1,9 +1,7 @@
-name: build-test
-
+name: build-verify
 on:
   push:
-    branches:
-      - '**'
+    branches: [ "main" ]
     paths-ignore:
       - '.github/**'
       - '.gitignore'
@@ -16,7 +14,7 @@ on:
       - '.gitignore'
       - 'LICENSE'
       - '*.md'
-
+permissions: read-all
 jobs:
   build:
     runs-on: ubuntu-latest
