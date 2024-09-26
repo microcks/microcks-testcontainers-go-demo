@@ -36,6 +36,7 @@ func setupEnsemble(ctx context.Context, t *testing.T, net *testcontainers.Docker
 	microcksEnsemble, err := ensemble.RunContainers(ctx,
 		ensemble.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
 		ensemble.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
+		ensemble.WithSecondaryArtifact("../../testdata/order-service-postman-collection.json"),
 		ensemble.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
 		ensemble.WithPostman(),
 		ensemble.WithNetwork(net),
@@ -172,7 +173,7 @@ func TestPostmanCollectionContract(t *testing.T) {
 	// Prepare a Microcks Test.
 	testRequest := client.TestRequest{
 		ServiceId:    "Order Service API:0.1.0",
-		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
+		RunnerType:   client.TestRunnerTypePOSTMAN,
 		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
 		Timeout:      2000,
 	}

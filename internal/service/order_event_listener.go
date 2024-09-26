@@ -33,9 +33,10 @@ type OrderEventListener interface {
 }
 
 type orderEventListener struct {
-	kafkaConsumer *kafka.Consumer
-	kafkaTopic    string
-	orderService  OrderService
+	kafkaConsumer   *kafka.Consumer
+	kafkaTopic      string
+	orderService    OrderService
+	listenerHandler chan struct{}
 }
 
 func NewOrderEventListener(kafkaConsumer *kafka.Consumer, kafkaTopic string, orderService OrderService) OrderEventListener {
@@ -53,26 +54,35 @@ func (oel *orderEventListener) Listen() error {
 	}
 
 	// Handle incoming messages.
-	handler := make(chan struct{})
+	stopChannel := make(chan struct{})
+	oel.listenerHandler = stopChannel
 	go func() {
-		defer close(handler)
+		// This is no longer needed since we're now closing the channel in Close()
+		// and handling the <-stopChannel case that ends the gorounting.
+		//defer close(handler)
 		for {
-			message, err := oel.kafkaConsumer.ReadMessage(100 * time.Millisecond)
-			if err != nil {
-				// Errors are informational and automatically handled by the consumer
-				continue
-			}
-			fmt.Printf("Consumed event from topic %s: key = %-10s value = %s\n",
-				*message.TopicPartition.Topic, string(message.Key), string(message.Value))
+			select {
+			case <-stopChannel:
+				fmt.Println("Stopping Kafka listener goroutine...")
+				return
+			default:
+				message, err := oel.kafkaConsumer.ReadMessage(100 * time.Millisecond)
+				if err != nil {
+					// Errors are informational and automatically handled by the consumer
+					continue
+				}
+				fmt.Printf("Consumed event from topic %s: key = %-10s value = %s\n",
+					*message.TopicPartition.Topic, string(message.Key), string(message.Value))
 
-			// Transform message value in OrderEvent.
-			orderEvent := model.OrderEvent{}
-			err = json.Unmarshal(message.Value, &orderEvent)
-			if err != nil {
-				fmt.Println("Error while deserializing message value", err)
-			} else {
-				order := oel.orderService.UpdateReviewedOrder(&orderEvent)
-				fmt.Println("Order '" + order.Id + "' has been updated after review")
+				// Transform message value in OrderEvent.
+				orderEvent := model.OrderEvent{}
+				err = json.Unmarshal(message.Value, &orderEvent)
+				if err != nil {
+					fmt.Println("Error while deserializing message value", err)
+				} else {
+					order := oel.orderService.UpdateReviewedOrder(&orderEvent)
+					fmt.Println("Order '" + order.Id + "' has been updated after review")
+				}
 			}
 		}
 	}()
@@ -82,5 +92,9 @@ func (oel *orderEventListener) Listen() error {
 
 func (oel *orderEventListener) Stop() {
 	fmt.Println("Stopping Kafka consumer...")
-	oel.kafkaConsumer.Close()
+	close(oel.listenerHandler)
+	err := oel.kafkaConsumer.Close()
+	if err != nil {
+		fmt.Println("Got error while closing consumer: " + err.Error())
+	}
 }

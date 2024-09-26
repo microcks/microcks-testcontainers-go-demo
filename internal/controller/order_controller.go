@@ -55,7 +55,7 @@ func (oc *orderController) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	// Place a new order.
 	order, err := oc.service.PlaceOrder(&info)
 	if err != nil {
-		// Manage unavialble product.
+		// Manage unavailable product.
 		var unavailableErr *service.UnavailablePastryError
 		if errors.As(err, &unavailableErr) {
 			w.Header().Set("Content-Type", "application/json")

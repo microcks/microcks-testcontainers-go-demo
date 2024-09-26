@@ -94,16 +94,16 @@ func Run(applicationProperties app.ApplicationProperties, applicationServices ch
 	applicationServices <- services // service to channel
 
 	// Define your HTTP routes
-	http.HandleFunc("/", handler)
-
-	http.HandleFunc("/api/orders", orderController.CreateOrder)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handler)
+	mux.HandleFunc("/api/orders", orderController.CreateOrder)
 
 	// Start your HTTP server
 	fmt.Println("Microcks TestContainers Go Demo application is listening on localhost:9000")
 	fmt.Println("")
 
 	//go http.ListenAndServe(":9000", nil)
-	server := &http.Server{Addr: ":9000", Handler: nil}
+	server := &http.Server{Addr: ":9000", Handler: mux}
 	err = server.ListenAndServe()
 
 	<-close
