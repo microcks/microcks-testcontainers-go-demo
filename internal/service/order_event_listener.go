@@ -58,7 +58,7 @@ func (oel *orderEventListener) Listen() error {
 	oel.listenerHandler = stopChannel
 	go func() {
 		// This is no longer needed since we're now closing the channel in Close()
-		// and handling the <-stopChannel case that ends the gorounting.
+		// and handling the <-stopChannel case that ends the gorountine.
 		//defer close(handler)
 		for {
 			select {

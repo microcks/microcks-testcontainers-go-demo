@@ -108,6 +108,7 @@ func Run(applicationProperties app.ApplicationProperties, applicationServices ch
 
 	<-close
 	orderListener.Stop()
+	kafkaProducer.Close()
 	server.Shutdown(context.Background())
 	fmt.Println("Exiting Microcks TestContainers Go Demo application.")
 }

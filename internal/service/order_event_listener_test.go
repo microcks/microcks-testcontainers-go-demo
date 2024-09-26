@@ -29,7 +29,6 @@ import (
 func TestEventIsConsumedAndProcessedByService(t *testing.T) {
 	t.Run("Test", testEventIsConsumedAndProcessedByService(func(t *testing.T, tc *helper.TestContext) {
 		// Test code goes here which can leverage the context
-		fmt.Println("My test code got executed")
 
 		// Try checking for received and processed order.
 		done := make(chan struct{})
@@ -41,8 +40,7 @@ func TestEventIsConsumedAndProcessedByService(t *testing.T) {
 				order := tc.AppServices.OrderService.GetOrder("123-456-789")
 				if order == nil {
 					fmt.Println("Got no order '123-456-789' yet...")
-				}
-				if order != nil {
+				} else {
 					orderFound = true
 					require.Equal(t, "lbroudoux", order.CustomerId)
 					require.Equal(t, model.VALIDATED, order.Status)
