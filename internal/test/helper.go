@@ -34,9 +34,9 @@ import (
 )
 
 type TestContext struct {
-	microcksEnsemble *ensemble.MicrocksContainersEnsemble
-	kafkaContainer   *kafkaTC.KafkaContainer
-	appServices      *app.ApplicationServices
+	MicrocksEnsemble *ensemble.MicrocksContainersEnsemble
+	KafkaContainer   *kafkaTC.KafkaContainer
+	AppServices      *app.ApplicationServices
 }
 
 func SetupTestContext(t *testing.T) (*TestContext, error) {
@@ -97,10 +97,12 @@ func SetupTestContext(t *testing.T) (*TestContext, error) {
 	baseApiUrl, err := microcksEnsemble.GetMicrocksContainer().RestMockEndpoint(ctx, "API Pastries", "0.0.1")
 	require.NoError(t, err)
 
+	reviewedTopic := microcksEnsemble.GetAsyncMinionContainer().KafkaMockTopic("Order Events API", "0.1.0", "PUBLISH orders-reviewed")
+
 	applicationProperties := &app.ApplicationProperties{
 		PastriesBaseUrl:          baseApiUrl,
 		OrderEventsCreatedTopic:  "orders-created",
-		OrderEventsReviewedTopic: "orders-reviewed",
+		OrderEventsReviewedTopic: reviewedTopic,
 		KafkaConfigMap: &kafka.ConfigMap{
 			"bootstrap.servers": brokerURL[0],
 			"group.id":          "order-service",
@@ -110,14 +112,17 @@ func SetupTestContext(t *testing.T) (*TestContext, error) {
 
 	appServicesChan := make(chan app.ApplicationServices)
 	go server.Run(*applicationProperties, appServicesChan)
-	defer server.Close()
+	//defer server.Close()
+	t.Cleanup(func() {
+		server.Close()
+	})
 
 	appServices := <-appServicesChan
 
 	return &TestContext{
-		microcksEnsemble: microcksEnsemble,
-		kafkaContainer:   kafkaContainer,
-		appServices:      &appServices,
+		MicrocksEnsemble: microcksEnsemble,
+		KafkaContainer:   kafkaContainer,
+		AppServices:      &appServices,
 	}, nil
 }
 

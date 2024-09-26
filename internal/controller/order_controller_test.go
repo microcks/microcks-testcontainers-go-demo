@@ -96,7 +96,9 @@ func TestOpenAPIContractAdvanced(t *testing.T) {
 
 	appServicesChan := make(chan app.ApplicationServices)
 	go server.Run(*applicationProperties, appServicesChan)
-	defer server.Close()
+	t.Cleanup(func() {
+		server.Close()
+	})
 
 	// Wait til application is ready.
 	_ = <-appServicesChan
@@ -165,7 +167,9 @@ func TestPostmanCollectionContract(t *testing.T) {
 
 	appServicesChan := make(chan app.ApplicationServices)
 	go server.Run(*applicationProperties, appServicesChan)
-	defer server.Close()
+	t.Cleanup(func() {
+		server.Close()
+	})
 
 	// Wait til application is ready.
 	_ = <-appServicesChan
