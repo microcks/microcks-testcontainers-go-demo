@@ -1,15 +1,14 @@
 module github.com/microcks/microcks-testcontainers-go-demo
 
-go 1.22.0
+go 1.23.2
 
 //replace microcks.io/testcontainers-go => ../microcks-testcontainers-go
 
 require (
-	github.com/confluentinc/confluent-kafka-go/v2 v2.5.3
+	github.com/confluentinc/confluent-kafka-go/v2 v2.6.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/testcontainers/testcontainers-go v0.33.1-0.20240903122610-cf51ec77b031
-	github.com/testcontainers/testcontainers-go/modules/kafka v0.33.0
+	github.com/testcontainers/testcontainers-go v0.34.0
 	microcks.io/go-client v0.2.0
 	microcks.io/testcontainers-go v0.1.1-0.20240923123243-301b3398e662
 )
@@ -23,7 +22,7 @@ require (
 	github.com/containerd/containerd v1.7.21 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
-	github.com/cpuguy83/dockercfg v0.3.1 // indirect
+	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v27.2.0+incompatible // indirect
@@ -65,9 +64,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240827150818-7e3bb234dfed // indirect
