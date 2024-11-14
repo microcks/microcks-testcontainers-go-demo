@@ -1,18 +1,17 @@
-/*
- * Copyright The Microcks Authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright The Microcks Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package service
 
 import (
@@ -41,19 +40,22 @@ func NewOrderEventPublisher(kafkaProducer *kafka.Producer, kafkaTopic string) Or
 	}
 }
 
-// PublishOrderEvent
+// PublishOrderEvent.
 func (oep *orderEventPublisher) PublishOrderEvent(event *model.OrderEvent) (*model.OrderEvent, error) {
 	// Serailize OrderEvent in JSON.
-	eventJson, err := json.Marshal(event)
+	eventJSON, err := json.Marshal(event)
 	if err != nil {
 		return nil, err
 	}
 
 	// Publish on Kafka topic.
-	oep.kafkaProducer.Produce(&kafka.Message{
+	err = oep.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &oep.kafkaTopic, Partition: kafka.PartitionAny},
-		Value:          eventJson,
+		Value:          eventJSON,
 	}, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	numMsg := oep.kafkaProducer.Flush(50)
 	fmt.Println("Send", numMsg, "Kafka messages")

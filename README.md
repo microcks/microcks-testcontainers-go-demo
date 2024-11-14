@@ -133,11 +133,11 @@ ok      github.com/microcks/microcks-testcontainers-go-demo/internal/client     
 ```
 
 ```sh
-$ go test -timeout 30s -run "^TestOpenAPIContractAdvanced$" ./internal/controller -v
+$ go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestOpenAPIContractAdvanced
 
-$ go test -timeout 30s -run "^TestPostmanCollectionContract$" ./internal/controller -v
+$ go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestPostmanCollectionContract
 
-$ go test -timeout 30s -run "^TestOrderEventIsPublishedWhenOrderIsCreated$" ./internal/service -v
+$ go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestOrderEventIsPublishedWhenOrderIsCreated
 
-$ go test -timeout 30s -run "^TestEventIsConsumedAndProcessedByService$" ./internal/service -v
+$ go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestEventIsConsumedAndProcessedByService
 ```
