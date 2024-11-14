@@ -139,5 +139,5 @@ $ go test -timeout 30s -run "^TestPostmanCollectionContract$" ./internal/control
 
 $ go test -timeout 30s -run "^TestOrderEventIsPublishedWhenOrderIsCreated$" ./internal/service -v
 
-#$ go test -timeout 30s -run "^TestEventIsConsumedAndProcessedByService$" ./internal/service -v
+$ go test -timeout 30s -run "^TestEventIsConsumedAndProcessedByService$" ./internal/service -v
 ```

@@ -91,10 +91,5 @@ func (oel *orderEventListener) Listen() error {
 }
 
 func (oel *orderEventListener) Stop() {
-	fmt.Println("Stopping Kafka consumer...")
 	close(oel.listenerHandler)
-	err := oel.kafkaConsumer.Close()
-	if err != nil {
-		fmt.Println("Got error while closing consumer: " + err.Error())
-	}
 }

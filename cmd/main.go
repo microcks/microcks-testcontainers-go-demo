@@ -51,7 +51,8 @@ func main() {
 	}
 
 	appServicesChan := make(chan internal.ApplicationServices)
-	go run.Run(*applicationProperties, appServicesChan)
+	app := run.NewApplication()
+	go app.Start(*applicationProperties, appServicesChan)
 	_ = <-appServicesChan
 
 	// Setup signal hooks.
@@ -66,5 +67,6 @@ func main() {
 	}()
 
 	<-close
+	app.Stop()
 	fmt.Println("Exiting Microcks TestContainers Go Demo application main.")
 }

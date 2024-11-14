@@ -20,9 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	app "github.com/microcks/microcks-testcontainers-go-demo/internal"
@@ -36,20 +34,27 @@ const (
 	DefaultApplicationPort = 9000
 )
 
-var close chan bool
+// Application is the application interface for starting/stopping it.
+type Application interface {
+	// Start this demo application using properties.
+	Start(applicationProperties app.ApplicationProperties, applicationServices chan app.ApplicationServices)
+	// Stop this demo application.
+	Stop()
+}
 
-func Run(applicationProperties app.ApplicationProperties, applicationServices chan app.ApplicationServices) {
-	// Setup signal hooks.
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	close = make(chan bool, 1)
+type application struct {
+	stopChannel chan struct{}
+	appServices app.ApplicationServices
+}
 
-	go func() {
-		sig := <-sigs
-		fmt.Println("Caught signal " + sig.String())
-		close <- true
-	}()
+func NewApplication() Application {
+	return &application{}
+}
 
+func (me *application) Start(applicationProperties app.ApplicationProperties, applicationServices chan app.ApplicationServices) {
+	me.stopChannel = make(chan struct{})
+
+	// Initialize kafka server.
 	kafkaServer, err := applicationProperties.KafkaConfigMap.Get("bootstrap.servers", "unknown")
 	if err != nil {
 		fmt.Println("No bootstrap.servers specified for KafkaServer", err)
@@ -104,17 +109,28 @@ func Run(applicationProperties app.ApplicationProperties, applicationServices ch
 
 	//go http.ListenAndServe(":9000", nil)
 	server := &http.Server{Addr: ":9000", Handler: mux}
-	err = server.ListenAndServe()
 
-	<-close
-	orderListener.Stop()
-	kafkaProducer.Close()
-	server.Shutdown(context.Background())
-	fmt.Println("Exiting Microcks TestContainers Go Demo application.")
+	go func() {
+		for {
+			select {
+			case <-me.stopChannel:
+				orderListener.Stop()
+				fmt.Println("Stopping Kafka producer & consumer...")
+				kafkaProducer.Close()
+				kafkaConsumer.Close()
+				server.Shutdown(context.Background())
+				fmt.Println("Application is stopped")
+				return
+			default:
+				err = server.ListenAndServe()
+			}
+		}
+	}()
 }
 
-func Close() {
-	close <- true
+func (me *application) Stop() {
+	fmt.Println("Stopping Microcks TestContainers Go Demo application...")
+	close(me.stopChannel)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {

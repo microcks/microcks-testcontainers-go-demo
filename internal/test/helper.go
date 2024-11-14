@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/microcks/microcks-testcontainers-go-demo/cmd/run"
 	server "github.com/microcks/microcks-testcontainers-go-demo/cmd/run"
 	app "github.com/microcks/microcks-testcontainers-go-demo/internal"
 	"github.com/stretchr/testify/require"
@@ -72,6 +73,7 @@ func SetupTestContext(t *testing.T) (*TestContext, error) {
 		ensemble.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
 		ensemble.WithMainArtifact("../../testdata/order-events-asyncapi.yaml"),
 		ensemble.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
+		ensemble.WithSecondaryArtifact("../../testdata/order-service-postman-collection.json"),
 		ensemble.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
 		ensemble.WithPostman(),
 		ensemble.WithAsyncFeature(),
@@ -111,10 +113,11 @@ func SetupTestContext(t *testing.T) (*TestContext, error) {
 	}
 
 	appServicesChan := make(chan app.ApplicationServices)
-	go server.Run(*applicationProperties, appServicesChan)
-	//defer server.Close()
+	app := run.NewApplication()
+	go app.Start(*applicationProperties, appServicesChan)
+	//defer app.Stop()
 	t.Cleanup(func() {
-		server.Close()
+		app.Stop()
 	})
 
 	appServices := <-appServicesChan

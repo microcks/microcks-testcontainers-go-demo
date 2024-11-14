@@ -21,175 +21,76 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	server "github.com/microcks/microcks-testcontainers-go-demo/cmd/run"
-	app "github.com/microcks/microcks-testcontainers-go-demo/internal"
+	helper "github.com/microcks/microcks-testcontainers-go-demo/internal/test"
 	"github.com/stretchr/testify/require"
-	testcontainers "github.com/testcontainers/testcontainers-go"
-	kafkaTC "github.com/testcontainers/testcontainers-go/modules/kafka"
-	"github.com/testcontainers/testcontainers-go/network"
 	client "microcks.io/go-client"
-	ensemble "microcks.io/testcontainers-go/ensemble"
 )
-
-func setupEnsemble(ctx context.Context, t *testing.T, net *testcontainers.DockerNetwork) *ensemble.MicrocksContainersEnsemble {
-	microcksEnsemble, err := ensemble.RunContainers(ctx,
-		ensemble.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
-		ensemble.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
-		ensemble.WithSecondaryArtifact("../../testdata/order-service-postman-collection.json"),
-		ensemble.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
-		ensemble.WithPostman(),
-		ensemble.WithNetwork(net),
-		ensemble.WithHostAccessPorts([]int{server.DefaultApplicationPort}),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		if err := microcksEnsemble.Terminate(ctx); err != nil {
-			t.Fatalf("failed to terminate container: %s", err)
-		}
-	})
-	return microcksEnsemble
-}
 
 func TestOpenAPIContractAdvanced(t *testing.T) {
 	ctx := context.Background()
-
-	// Common network and Kafka container.
-	net, err := network.New(ctx, network.WithCheckDuplicate())
-	if err != nil {
-		require.NoError(t, err)
-		return
-	}
-
-	kafkaContainer, err := kafkaTC.Run(ctx,
-		"confluentinc/confluent-local:7.5.0",
-		network.WithNetwork([]string{"kafka"}, net),
-	)
-	t.Cleanup(func() {
-		if err := kafkaContainer.Terminate(ctx); err != nil {
-			t.Fatalf("failed to terminate Kafka container: %s", err)
+	t.Run("Test", testOpenAPIContractAdvanced(func(t *testing.T, tc *helper.TestContext) {
+		// Test code goes here which can leverage the context
+		// Prepare a Microcks Test.
+		testRequest := client.TestRequest{
+			ServiceId:    "Order Service API:0.1.0",
+			RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
+			TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+			Timeout:      2000,
 		}
-	})
-
-	brokerURL, err := kafkaContainer.Brokers(ctx)
-	if err != nil || len(brokerURL) == 0 {
+		testResult, err := tc.MicrocksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
 		require.NoError(t, err)
-		return
+
+		t.Logf("Test Result success is %t", testResult.Success)
+
+		// Log TestResult raw structure.
+		j, err := json.Marshal(testResult)
+		t.Logf(string(j))
+
+		require.True(t, testResult.Success)
+		require.Equal(t, 1, len(*testResult.TestCaseResults))
+	}))
+}
+
+func testOpenAPIContractAdvanced(test func(t *testing.T, tc *helper.TestContext)) func(*testing.T) {
+	return func(t *testing.T) {
+		tc, err := helper.SetupTestContext(t)
+		require.NoError(t, err)
+		defer helper.TeardownTestContext(tc)
+		test(t, tc)
 	}
-	fmt.Println("BrokerURL is " + brokerURL[0])
-
-	microcksEnsemble := setupEnsemble(ctx, t, net)
-
-	baseApiUrl, err := microcksEnsemble.GetMicrocksContainer().RestMockEndpoint(ctx, "API Pastries", "0.0.1")
-	require.NoError(t, err)
-
-	applicationProperties := &app.ApplicationProperties{
-		PastriesBaseUrl:          baseApiUrl,
-		OrderEventsCreatedTopic:  "orders-created",
-		OrderEventsReviewedTopic: "orders-reviewed",
-		KafkaConfigMap: &kafka.ConfigMap{
-			"bootstrap.servers": brokerURL[0],
-			"group.id":          "order-service",
-			"auto.offset.reset": "latest",
-		},
-	}
-
-	appServicesChan := make(chan app.ApplicationServices)
-	go server.Run(*applicationProperties, appServicesChan)
-	t.Cleanup(func() {
-		server.Close()
-	})
-
-	// Wait til application is ready.
-	_ = <-appServicesChan
-
-	// Prepare a Microcks Test.
-	testRequest := client.TestRequest{
-		ServiceId:    "Order Service API:0.1.0",
-		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
-		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
-		Timeout:      2000,
-	}
-	testResult, err := microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
-	require.NoError(t, err)
-
-	t.Logf("Test Result success is %t", testResult.Success)
-
-	// Log TestResult raw structure.
-	j, err := json.Marshal(testResult)
-	t.Logf(string(j))
-
-	require.True(t, testResult.Success)
-	require.Equal(t, 1, len(*testResult.TestCaseResults))
 }
 
 func TestPostmanCollectionContract(t *testing.T) {
 	ctx := context.Background()
-
-	// Common network and Kafka container.
-	net, err := network.New(ctx, network.WithCheckDuplicate())
-	if err != nil {
-		require.NoError(t, err)
-		return
-	}
-
-	kafkaContainer, err := kafkaTC.Run(ctx,
-		"confluentinc/confluent-local:7.5.0",
-		network.WithNetwork([]string{"kafka"}, net),
-	)
-	t.Cleanup(func() {
-		if err := kafkaContainer.Terminate(ctx); err != nil {
-			t.Fatalf("failed to terminate Kafka container: %s", err)
+	t.Run("Test", testPostmanCollectionContract(func(t *testing.T, tc *helper.TestContext) {
+		// Test code goes here which can leverage the context
+		// Prepare a Microcks Test.
+		testRequest := client.TestRequest{
+			ServiceId:    "Order Service API:0.1.0",
+			RunnerType:   client.TestRunnerTypePOSTMAN,
+			TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+			Timeout:      2000,
 		}
-	})
-
-	microcksEnsemble := setupEnsemble(ctx, t, net)
-
-	baseApiUrl, err := microcksEnsemble.GetMicrocksContainer().RestMockEndpoint(ctx, "API Pastries", "0.0.1")
-	require.NoError(t, err)
-
-	brokerURL, err := kafkaContainer.Brokers(ctx)
-	if err != nil || len(brokerURL) == 0 {
+		testResult, err := tc.MicrocksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
 		require.NoError(t, err)
-		return
+
+		t.Logf("Test Result success is %t", testResult.Success)
+
+		// Log TestResult raw structure.
+		j, err := json.Marshal(testResult)
+		t.Logf(string(j))
+
+		require.True(t, testResult.Success)
+		require.Equal(t, 1, len(*testResult.TestCaseResults))
+	}))
+}
+
+func testPostmanCollectionContract(test func(t *testing.T, tc *helper.TestContext)) func(*testing.T) {
+	return func(t *testing.T) {
+		tc, err := helper.SetupTestContext(t)
+		require.NoError(t, err)
+		defer helper.TeardownTestContext(tc)
+		test(t, tc)
 	}
-
-	applicationProperties := &app.ApplicationProperties{
-		PastriesBaseUrl:          baseApiUrl,
-		OrderEventsCreatedTopic:  "orders-created",
-		OrderEventsReviewedTopic: "orders-reviewed",
-		KafkaConfigMap: &kafka.ConfigMap{
-			"bootstrap.servers": brokerURL[0],
-			"group.id":          "order-service",
-			"auto.offset.reset": "latest",
-		},
-	}
-
-	appServicesChan := make(chan app.ApplicationServices)
-	go server.Run(*applicationProperties, appServicesChan)
-	t.Cleanup(func() {
-		server.Close()
-	})
-
-	// Wait til application is ready.
-	_ = <-appServicesChan
-
-	// Prepare a Microcks Test.
-	testRequest := client.TestRequest{
-		ServiceId:    "Order Service API:0.1.0",
-		RunnerType:   client.TestRunnerTypePOSTMAN,
-		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
-		Timeout:      2000,
-	}
-	testResult, err := microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
-	require.NoError(t, err)
-
-	t.Logf("Test Result success is %t", testResult.Success)
-
-	// Log TestResult raw structure.
-	j, err := json.Marshal(testResult)
-	t.Logf(string(j))
-
-	require.True(t, testResult.Success)
-	require.Equal(t, 1, len(*testResult.TestCaseResults))
 }
