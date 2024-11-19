@@ -1,68 +1,27 @@
-# microcks-testcontainers-go-demo
+# Microcks Testcontainers Go Demo
 
-Go demonstration app on how to use Microcks Testcontainers in your dev/test workflow
+![Microcks Testcontainers Go demo](./assets/microcks-testcontainers-go-demo.png)
+
+This application is a demonstration on how to integrate Microcks via Testcontainers within your development inner-loop.
+
+You will work with a Go application and explore how to:
+* Use Microcks for **provisioning third-party API mocks**,
+* Use Microcks for **simulating external Kafka events publishers**,
+* Write tests using Microcks **contract-testing** features for both **REST/OpenAPI based APIs and Events/AsyncAPI** based messaging
+
+## Table of contents
+
+* [Step 1: Getting Started](step-1-getting-started.md)
+* [Step 2: Exploring the app](step-2-exploring-the-app.md)
+* [Step 3: Local Development Experience with Microcks](step-3-local-development-experience.md)
+* [Step 4: Write Tests for REST](step-4-write-rest-tests.md)
+* [Step 5: Write Tests for Async](step-5-write-async-tests.md)
+
+## License Summary
+
+The code in this repository is made available under the MIT license. See the [LICENSE](LICENSE) file for details.
 
 
-## Basic commands
-
-Start launching Microcks locally:
-
-```sh
-$ ./microcks.sh
-==== OUTPUT ====
-[...]
-```
-
-In another terminal, run the application:
-
-```sh
-$ go run cmd/main.go
-==== OUTPUT ====
-Starting Microcks TestContainers Go Demo application...
-  Connecting to Kafka server: localhost:9092
-  Connecting to Microcks Pastries: http://localhost:9090/rest/API+Pastries/0.0.1
-%4|1725661943.865|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
-%4|1725661943.866|CONFWARN|rdkafka#producer-2| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
-Microcks TestContainers Go Demo application is listening on localhost:9000
-
-Consumed event from topic OrderEventsAPI-0.1.0-orders-reviewed: key = 1725661947312 value = {"timestamp":1706087114133,"order":{"id":"123-456-789","customerId":"lbroudoux","status":"VALIDATED","productQuantities":[{"productName":"Croissant","quantity":1},{"productName":"Pain Chocolat","quantity":1}],"totalPrice":4.2},"changeReason":"Validation"}
-Order '123-456-789' has been updated after review
-[...]
-```
-
-In a third terminal, call the API:
-
-_Successful call_
-
-```sh
-$ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
-    -d '{"customerId": "lbroudoux", "productQuantities": [{"productName": "Millefeuille", "quantity": 1}], "totalPrice": 5.1}' -s | jq .
-==== OUTPUT ====
-{
-  "customerId": "lbroudoux",
-  "productQuantities": [
-    {
-      "productName": "Millefeuille",
-      "quantity": 1
-    }
-  ],
-  "totalPrice": 5.1,
-  "id": "dded1111-8e99-4ba7-8755-e718972480e3",
-  "status": "CREATED"
-}
-```
-
-_Error call_
-
-```sh
-$ curl -XPOST localhost:9000/api/orders -H 'Content-Type: application/json' \
-    -d '{"customerId": "lbroudoux", "productQuantities": [{"productName": "Eclair Chocolat", "quantity": 1}], "totalPrice": 5.1}' -s | jq .
-==== OUTPUT ====
-{
-  "productName": "Eclair Chocolat",
-  "details": "Pastry Eclair Chocolat is not available"
-}
-```
 
 ## Running tests
 
