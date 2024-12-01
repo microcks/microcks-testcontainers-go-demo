@@ -8,7 +8,7 @@ require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.6.0
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	microcks.io/go-client v0.2.0
 	microcks.io/testcontainers-go v0.2.0
