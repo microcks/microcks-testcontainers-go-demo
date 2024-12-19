@@ -104,18 +104,146 @@ sequenceDiagram
     PastryAPIClientTests->>+PastryAPIClient: ListPastries("S")
     PastryAPIClient->>+Microcks: GET /pastries?size=S
     participant Microcks
-    Note right of Microcks: Initialized at test startup
+    Note right of Microcks: Initialized at test setup
     Microcks-->>-PastryAPIClient: HTTP Response w. JSON[]
     PastryAPIClient-->>-PastryAPIClientTests: []Pastry
 ```
 
+## Integration Test SetUp
+
+From now, all the tests we'll write will be integration tests in the sense that they'll need a fully running application.
+Our integration tests setup is defined into the `suite_test.go` file in the `internal/test` folder. The `SetupSuite()``
+function defines a common `BaseSuite` struct as follows:
+
+```go
+func (s *BaseSuite) SetupSuite() {
+	//[...]
+
+	kafkaContainer, err := kafkaTC.Run(ctx,
+		"confluentinc/confluent-local:7.5.0",
+		network.WithNetwork([]string{"kafka"}, net),
+
+		testcontainers.WithEnv(map[string]string{
+			"KAFKA_LISTENERS":                      "PLAINTEXT://0.0.0.0:9093,BROKER://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094,TC://0.0.0.0:19092",
+			"KAFKA_LISTENER_SECURITY_PROTOCOL_MAP": "PLAINTEXT:PLAINTEXT,BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,TC:PLAINTEXT",
+			"KAFKA_ADVERTISED_LISTENERS":           "PLAINTEXT://%s:%d,BROKER://%s:9092,TC://kafka:19092",
+		}),
+	)
+	//[...]
+
+	// Configure and startup a new MicrocksContainersEnsemble.
+	microcksEnsemble, err := ensemble.RunContainers(ctx,
+		ensemble.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
+		ensemble.WithMainArtifact("../../testdata/order-events-asyncapi.yaml"),
+		ensemble.WithMainArtifact("../../testdata/apipastries-openapi.yaml"),
+		ensemble.WithSecondaryArtifact("../../testdata/order-service-postman-collection.json"),
+		ensemble.WithSecondaryArtifact("../../testdata/apipastries-postman-collection.json"),
+		ensemble.WithPostman(),
+		ensemble.WithAsyncFeature(),
+		ensemble.WithNetwork(net),
+		ensemble.WithHostAccessPorts([]int{server.DefaultApplicationPort}),
+		ensemble.WithKafkaConnection(kafkaCon.Connection{
+			BootstrapServers: "kafka:19092",
+		}),
+	)
+
+    //[...]
+
+    // Configure and start the application.
+	baseAPIURL, err := microcksEnsemble.GetMicrocksContainer().RestMockEndpoint(ctx, "API Pastries", "0.0.1")
+	s.Require().NoError(err)
+
+	reviewedTopic := microcksEnsemble.GetAsyncMinionContainer().KafkaMockTopic("Order Events API", "0.1.0", "PUBLISH orders-reviewed")
+
+    applicationProperties := &app.ApplicationProperties{
+		PastriesBaseURL:          baseAPIURL,
+		OrderEventsCreatedTopic:  "orders-created",
+		OrderEventsReviewedTopic: reviewedTopic,
+		KafkaConfigMap: &kafka.ConfigMap{
+			"bootstrap.servers": brokerURL[0],
+			"group.id":          "order-service",
+			"auto.offset.reset": "latest",
+		},
+	}
+
+	appRun := server.NewApplication(applicationProperties)
+    //[...]
+}
+```
+
+* We configure and start a Kafka container that will be used by our application,
+* We also configure a `MicrocksContainersEnsemble` that will be responsible for providing mocks for our 3rd party systems
+and execute contract tests. The `microcksEnsemble` is also connected to the Kafka container,
+* We finally configure and start the application itself to use the endpoints provided by the Kafka broker and the Microcks
+container.
+
+And that's it! 🎉 
+
 ## Second Test - Verify the technical conformance of Order Service API
 
-The 2nd thing we want to validate is the conformance of the `Order API` we'll expose to consumers. In this section and the next one,
-we'll focus on testing the `OrderController` component of our application:
+Back to our tests 🧪 The 2nd thing we want to validate is the conformance of the `Order API` we'll expose to consumers.
+In this section and the next one, we'll focus on testing the `OrderController` component of our application:
 
 ![Order Controller Test](./assets/test-order-service-api.png)
 
+Microcks Testcontainer integration provides another approach by letting you reuse the OpenAPI specification directly in your test suite, without having to write assertions and validation of messages for API interaction.
+
+Let's review the test suite `suite_test.go` under `internal/test` folder. 
+
+```go
+func (s *BaseSuite) TestOpenAPIContract() {
+	// Test code goes here which can leverage the context
+	// Prepare a Microcks Test.
+	testRequest := client.TestRequest{
+		ServiceId:    "Order Service API:0.1.0",
+		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
+		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+		Timeout:      2000,
+	}
+	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(context.Background(), &testRequest)
+	s.Require().NoError(err)
+
+	s.T().Logf("Test Result success is %t", testResult.Success)
+
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	s.Require().NoError(err)
+	s.T().Log(string(j))
+
+	s.True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
+}
+```
+
+> You can execute this test from the terminal using the `go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestOpenAPIContract` command.
+
+Here, we're using a Microcks-provided `TestRequest` object that allows us to specify to Microcks the scope of the conformance
+test we want to run:
+* We ask for testing our endpoint against the service interface of `Order Service API` in version `0.1.0`.
+  These are the identifiers found in the `order-service-openapi.yml` file.
+* We ask Microcks to validate the `OpenAPI Schema` conformance by specifying a `RunnerType`.
+* We ask Microcks to validate the localhost endpoint of the running application launch in integration test setup (we use the `host.testcontainers.internal` alias for that).
+
+Finally, we're retrieving a `TestResult` from Microcks containers, and we can assert stuffs on this result, checking it's a success.
+
+The sequence diagram below details the test sequence. Microcks is used as a middleman that actually invokes your API with the example from its dataset: 
+
+```mermaid
+sequenceDiagram
+    TestOpenAPIContract->>+Microcks: TestEndpoint()
+    participant Microcks
+    Note right of Microcks: Initialized at test setup
+    loop For each example in Microcks
+      Microcks->>+OrderController: HTTP Request
+      OrderController->>+OrderService: business logic
+      OrderService-->-OrderController: response
+      OrderController-->-Microcks: HTTP Response
+      Microcks-->Microcks: validate Response
+    end  
+```
+
+Our `OrderController` (in `internal/controller/order_controller.go`) development is technically correct: all the JSON and 
+HTTP serialization layers have been tested!
 
 ## Third Test - Verify the business conformance of Order Service API
 
@@ -124,6 +252,32 @@ requested products in the order or change the total price in resulting order. Th
 
 You're now sure that beyond the technical conformance, the `Order Service` also behaves as expected regarding business 
 constraints. 
+
+```go
+func (s *BaseSuite) TestPostmanCollectionContract() {
+	ctx := context.Background()
+	// Test code goes here which can leverage the context
+	// Prepare a Microcks Test.
+	testRequest := client.TestRequest{
+		ServiceId:    "Order Service API:0.1.0",
+		RunnerType:   client.TestRunnerTypePOSTMAN,
+		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+		Timeout:      2000,
+	}
+	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
+	s.Require().NoError(err)
+
+	s.T().Logf("Test Result success is %t", testResult.Success)
+
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	s.Require().NoError(err)
+	s.T().Log(string(j))
+
+	s.True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
+}
+```
 
 ### 
 [Next](step-5-write-async-tests.md)
