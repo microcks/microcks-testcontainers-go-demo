@@ -70,7 +70,7 @@ func (s *BaseSuite) SetupSuite() {
 
 	s.kafkaContainer = kafkaContainer
 
-	// Configure and staratup a new MicrocksContainersEnsemble.
+	// Configure and startup a new MicrocksContainersEnsemble.
 	microcksEnsemble, err := ensemble.RunContainers(ctx,
 		ensemble.WithMainArtifact("../../testdata/order-service-openapi.yaml"),
 		ensemble.WithMainArtifact("../../testdata/order-events-asyncapi.yaml"),
@@ -149,20 +149,51 @@ func waitFor(timeout time.Duration, fn func() error) error {
 	}
 }
 
-func (s *BaseSuite) TestEventIsConsumedAndProcessedByService() {
-	err := waitFor(10*time.Second, func() error {
-		order := s.app.AppService.OrderService.GetOrder("123-456-789")
-		if order == nil {
-			return errors.New("got no order '123-456-789' yet")
-		}
-
-		fmt.Printf("Order is %v\n", order)
-		s.Equal("lbroudoux", order.CustomerID)
-		s.Equal(model.VALIDATED, order.Status)
-		s.Len(order.ProductQuantities, 2)
-		return nil
-	})
+func (s *BaseSuite) TestOpenAPIContract() {
+	// Test code goes here which can leverage the context
+	// Prepare a Microcks Test.
+	testRequest := client.TestRequest{
+		ServiceId:    "Order Service API:0.1.0",
+		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
+		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+		Timeout:      2000,
+	}
+	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(context.Background(), &testRequest)
 	s.Require().NoError(err)
+
+	s.T().Logf("Test Result success is %t", testResult.Success)
+
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	s.Require().NoError(err)
+	s.T().Log(string(j))
+
+	s.True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
+}
+
+func (s *BaseSuite) TestPostmanCollectionContract() {
+	ctx := context.Background()
+	// Test code goes here which can leverage the context
+	// Prepare a Microcks Test.
+	testRequest := client.TestRequest{
+		ServiceId:    "Order Service API:0.1.0",
+		RunnerType:   client.TestRunnerTypePOSTMAN,
+		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+		Timeout:      2000,
+	}
+	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
+	s.Require().NoError(err)
+
+	s.T().Logf("Test Result success is %t", testResult.Success)
+
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	s.Require().NoError(err)
+	s.T().Log(string(j))
+
+	s.True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
 }
 
 func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
@@ -222,49 +253,18 @@ func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
 	s.Require().True(testResult.Success)
 }
 
-func (s *BaseSuite) TestOpenAPIContractAdvanced() {
-	// Test code goes here which can leverage the context
-	// Prepare a Microcks Test.
-	testRequest := client.TestRequest{
-		ServiceId:    "Order Service API:0.1.0",
-		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
-		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
-		Timeout:      2000,
-	}
-	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(context.Background(), &testRequest)
+func (s *BaseSuite) TestEventIsConsumedAndProcessedByService() {
+	err := waitFor(10*time.Second, func() error {
+		order := s.app.AppService.OrderService.GetOrder("123-456-789")
+		if order == nil {
+			return errors.New("got no order '123-456-789' yet")
+		}
+
+		fmt.Printf("Order is %v\n", order)
+		s.Equal("lbroudoux", order.CustomerID)
+		s.Equal(model.VALIDATED, order.Status)
+		s.Len(order.ProductQuantities, 2)
+		return nil
+	})
 	s.Require().NoError(err)
-
-	s.T().Logf("Test Result success is %t", testResult.Success)
-
-	// Log TestResult raw structure.
-	j, err := json.Marshal(testResult)
-	s.Require().NoError(err)
-	s.T().Log(string(j))
-
-	s.True(testResult.Success)
-	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
-}
-
-func (s *BaseSuite) TestPostmanCollectionContract() {
-	ctx := context.Background()
-	// Test code goes here which can leverage the context
-	// Prepare a Microcks Test.
-	testRequest := client.TestRequest{
-		ServiceId:    "Order Service API:0.1.0",
-		RunnerType:   client.TestRunnerTypePOSTMAN,
-		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
-		Timeout:      2000,
-	}
-	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
-	s.Require().NoError(err)
-
-	s.T().Logf("Test Result success is %t", testResult.Success)
-
-	// Log TestResult raw structure.
-	j, err := json.Marshal(testResult)
-	s.Require().NoError(err)
-	s.T().Log(string(j))
-
-	s.True(testResult.Success)
-	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
 }
