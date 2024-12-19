@@ -35,7 +35,7 @@ $ ./microcks.sh
  ✔ Container microcks-testcontainers-node-nest-demo-importer-1  Started                                                                                                                         0.4s
 ```
 
-Because our `Order Service` application has been configured to talk to Microcks mocks (see the default settings in `src/pastry/pastry.module.ts`),
+Because our `Order Service` application has been configured to talk to Microcks mocks (see the default settings in `cmd/main.go`),
 you should be able to directly call the Order API and invoke the whole chain made of the 3 components:
 
 ```sh
