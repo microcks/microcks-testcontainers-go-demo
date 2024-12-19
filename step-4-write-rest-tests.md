@@ -250,8 +250,25 @@ HTTP serialization layers have been tested!
 The above section allows us to validate the technical conformance but not the business one! Imagine we forgot to record all the
 requested products in the order or change the total price in resulting order. This could raise some issues!
 
-You're now sure that beyond the technical conformance, the `Order Service` also behaves as expected regarding business 
-constraints. 
+Microcks allows to execute business conformance test by leveraging Postman Collection. If you're familiar with Postman Collection
+scripts, you'll open the `order-service-postman-collection.json` file and find some snippets like:
+
+```jshelllanguage
+pm.test("Correct products and quantities in order", function () {
+    var order = pm.response.json();
+    var productQuantities = order.productQuantities;
+    pm.expect(productQuantities).to.be.an("array");
+    pm.expect(productQuantities.length).to.eql(requestProductQuantities.length);
+    for (let i=0; i<requestProductQuantities.length; i++) {
+        var productQuantity = productQuantities[i];
+        var requestProductQuantity = requestProductQuantities[i];
+        pm.expect(productQuantity.productName).to.eql(requestProductQuantity.productName);
+    }
+});
+```
+
+You can now validate this from your Go Unit Test as well! Let's review the `TestPostmanCollectionContract()` function 
+under `internal/test/suite_test.go`:
 
 ```go
 func (s *BaseSuite) TestPostmanCollectionContract() {
@@ -278,6 +295,20 @@ func (s *BaseSuite) TestPostmanCollectionContract() {
 	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
 }
 ```
+
+> You can execute this test from the terminal using the `go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestPostmanCollectionContract` command.
+
+This snippet typically describes business constraints telling that a valid order response should have unchanged product and quantities. 
+
+Comparing to the code in previous section, the only change here is that we asked Microcks to use a `Postman` runner
+for executing our conformance test. What happens under the hood is now that Microcks is re-using the collection snippets
+to put some constraints on API response and check their conformance.
+
+The test sequence is exactly the same as in the previous section. The difference here lies in the type of response validation: Microcks
+reuses Postman collection constraints.
+
+You're now sure that beyond the technical conformance, the `Order Service` also behaves as expected regarding business 
+constraints. 
 
 ### 
 [Next](step-5-write-async-tests.md)
