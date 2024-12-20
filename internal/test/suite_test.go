@@ -203,7 +203,7 @@ func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
 		ServiceId:          "Order Events API:0.1.0",
 		RunnerType:         client.TestRunnerTypeASYNCAPISCHEMA,
 		TestEndpoint:       "kafka://kafka:19092/orders-created",
-		Timeout:            5000,
+		Timeout:            2000,
 		FilteredOperations: &[]string{"SUBSCRIBE orders-created"},
 	}
 
@@ -251,6 +251,7 @@ func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
 	s.T().Log(string(j))
 
 	s.Require().True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
 }
 
 func (s *BaseSuite) TestEventIsConsumedAndProcessedByService() {
