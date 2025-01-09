@@ -5,7 +5,7 @@ go 1.23.2
 //replace microcks.io/testcontainers-go => ../microcks-testcontainers-go
 
 require (
-	github.com/confluentinc/confluent-kafka-go/v2 v2.6.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.6.1
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
