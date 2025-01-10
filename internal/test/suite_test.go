@@ -300,7 +300,7 @@ func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
 
 	orderMap := messageMap["order"].(map[string]interface{})
 	s.Equal("123-456-789", orderMap["customerId"].(string))
-	s.Equal(8.4, orderMap["totalPrice"].(float64))
+	s.InDelta(8.4, orderMap["totalPrice"].(float64), 0.01)
 
 	productQuantities := orderMap["productQuantities"].([]interface{})
 	s.Equal(2, len(productQuantities)) //nolint:testifylint
