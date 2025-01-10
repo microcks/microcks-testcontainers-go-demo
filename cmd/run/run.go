@@ -72,7 +72,9 @@ func NewApplication(applicationProperties *app.ApplicationProperties) *App {
 		fmt.Println("Error while connecting to Kafka broker", err)
 		os.Exit(1)
 	}
-	kafkaProducer, err := kafka.NewProducer(applicationProperties.KafkaConfigMap)
+	kafkaProducer, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": kafkaServer,
+	})
 	if err != nil {
 		fmt.Println("Error while connecting to Kafka broker", err)
 		os.Exit(1)

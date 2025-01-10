@@ -1,6 +1,6 @@
 module github.com/microcks/microcks-testcontainers-go-demo
 
-go 1.23.2
+go 1.22.1
 
 //replace microcks.io/testcontainers-go => ../microcks-testcontainers-go
 
@@ -10,8 +10,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
-	microcks.io/go-client v0.2.0
-	microcks.io/testcontainers-go v0.2.0
+	microcks.io/go-client v0.3.0
+	microcks.io/testcontainers-go v0.3.1
 )
 
 require (
@@ -63,7 +63,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/mod v0.21.0 // indirect
+	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect

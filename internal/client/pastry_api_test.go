@@ -63,6 +63,11 @@ func TestGetPastry(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Eclair Chocolat", pastry.Name)
 	require.Equal(t, "unknown", pastry.Status)
+
+	// Check that the mock API has really been invoked.
+	mockInvoked, err := microcksContainer.Verify(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+	require.True(t, mockInvoked)
 }
 
 func TestListPastries(t *testing.T) {
@@ -72,6 +77,10 @@ func TestListPastries(t *testing.T) {
 	baseAPIURL, err := microcksContainer.RestMockEndpoint(ctx, "API Pastries", "0.0.1")
 	require.NoError(t, err)
 	pastryAPIClient := client.NewPastryAPIClient(baseAPIURL)
+
+	// Get the number of invocations before our test.
+	beforeMockInvocations, err := microcksContainer.ServiceInvocationsCount(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
 
 	pastries, err := pastryAPIClient.ListPastries("S")
 	require.NoError(t, err)
@@ -84,4 +93,9 @@ func TestListPastries(t *testing.T) {
 	pastries, err = pastryAPIClient.ListPastries("L")
 	require.NoError(t, err)
 	assert.Len(t, pastries, 2)
+
+	// Check our mock API has been invoked the correct number of times.
+	afterMockInvocations, err := microcksContainer.ServiceInvocationsCount(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+	require.Equal(t, 3, afterMockInvocations-beforeMockInvocations)
 }

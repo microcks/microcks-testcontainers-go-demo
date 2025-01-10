@@ -77,7 +77,7 @@ func (os *orderService) PlaceOrder(info *model.OrderInfo) (*model.Order, error) 
 	orderCreated := &model.OrderEvent{
 		Timestamp:    1000 * time.Now().Unix(),
 		Order:        *order,
-		ChangeReason: "creation",
+		ChangeReason: "Creation",
 	}
 	_, err := os.orderEventPublisher.PublishOrderEvent(orderCreated)
 	if err != nil {

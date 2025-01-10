@@ -109,6 +109,83 @@ sequenceDiagram
     PastryAPIClient-->>-PastryAPIClientTests: []Pastry
 ```
 
+### 🎁 Bonus step - Check the mock endpoints are actually used
+
+While the above test is a good start, it doesn't actually check that the mock endpoints are being used. In a more complex application, it's 
+possible that the client is not correctly configured or use some cache or other mechanism that would bypass the mock endpoints. In order to 
+check that you can actually use the `Verify()` function available on the Microcks container:
+
+```go
+func TestGetPastry(t *testing.T) {
+	ctx := context.Background()
+	microcksContainer := setup(ctx, t)
+
+	baseAPIURL, err := microcksContainer.RestMockEndpoint(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+	pastryAPIClient := client.NewPastryAPIClient(baseAPIURL)
+
+	pastry, err := pastryAPIClient.GetPastry("Millefeuille")
+	require.NoError(t, err)
+	require.Equal(t, "Millefeuille", pastry.Name)
+	require.Equal(t, "available", pastry.Status)
+
+	pastry, err = pastryAPIClient.GetPastry("Eclair Cafe")
+	require.NoError(t, err)
+	require.Equal(t, "Eclair Cafe", pastry.Name)
+	require.Equal(t, "available", pastry.Status)
+
+	pastry, err = pastryAPIClient.GetPastry("Eclair Chocolat")
+	require.NoError(t, err)
+	require.Equal(t, "Eclair Chocolat", pastry.Name)
+	require.Equal(t, "unknown", pastry.Status)
+
+	// Check that the mock API has really been invoked.
+	mockInvoked, err := microcksContainer.Verify(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+	require.True(t, mockInvoked)
+}
+```
+
+`Verify()` takes the target API name and version as arguments and returns a boolean indicating if the mock has been invoked. 
+This is a good way to ensure that the mock endpoints are actually being used in your test.
+
+If you need finer-grained control, you can also check the number of invocations with `ServiceInvocationsCount()`. This way 
+you can check that the mock has been invoked the correct number of times:
+
+```go
+func TestListPastries(t *testing.T) {
+	ctx := context.Background()
+	microcksContainer := setup(ctx, t)
+
+	baseAPIURL, err := microcksContainer.RestMockEndpoint(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+	pastryAPIClient := client.NewPastryAPIClient(baseAPIURL)
+
+	// Get the number of invocations before our test.
+	beforeMockInvocations, err := microcksContainer.ServiceInvocationsCount(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+
+	pastries, err := pastryAPIClient.ListPastries("S")
+	require.NoError(t, err)
+	assert.Len(t, pastries, 1)
+
+	pastries, err = pastryAPIClient.ListPastries("M")
+	require.NoError(t, err)
+	assert.Len(t, pastries, 2)
+
+	pastries, err = pastryAPIClient.ListPastries("L")
+	require.NoError(t, err)
+	assert.Len(t, pastries, 2)
+
+	// Check our mock API has been invoked the correct number of times.
+	afterMockInvocations, err := microcksContainer.ServiceInvocationsCount(ctx, "API Pastries", "0.0.1")
+	require.NoError(t, err)
+	assert.Equal(t, 3, afterMockInvocations-beforeMockInvocations)
+}
+```
+
+This is a super powerful way to ensure that your application logic (caching, no caching, etc.) is correctly implemented and use the mock endpoints when required 🎉
+
 ## Integration Test SetUp
 
 From now, all the tests we'll write will be integration tests in the sense that they'll need a fully running application.
@@ -310,5 +387,53 @@ reuses Postman collection constraints.
 You're now sure that beyond the technical conformance, the `Order Service` also behaves as expected regarding business 
 constraints. 
 
-### 
+### 🎁 Bonus step - Verify the business conformance of Order Service API in pure Go
+
+Even if the Postman Collection runner is a great way to validate business conformance, you may want to do it in pure Go. This is possible
+by retrieving the messages exchanged during the test and checking their content. Let's review the should conform to OpenAPI spec and Business
+rules test under test/orders.api.e2e-spec.ts:
+
+```go
+func (s *BaseSuite) TestOpenAPIContractAndBusinessConformance() {
+	ctx := context.Background()
+	// Test code goes here which can leverage the context
+	// Prepare a Microcks Test.
+	testRequest := client.TestRequest{
+		ServiceId:    "Order Service API:0.1.0",
+		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
+		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+		Timeout:      2000,
+	}
+	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
+	s.Require().NoError(err)
+
+	s.T().Logf("Test Result success is %t", testResult.Success)
+
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	s.Require().NoError(err)
+	s.T().Log(string(j))
+
+	s.True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
+
+	// You may also check business conformance.
+	pairs, err := s.microcksEnsemble.GetMicrocksContainer().MessagesForTestCase(ctx, testResult, "POST /orders")
+	s.Require().NoError(err)
+
+	for _, pair := range *pairs {
+		s.T().Logf("Got a responseBody %s", *pair.Response.Content)
+	}
+}
+```
+
+> You can execute this test from the terminal using the `go test ./internal/test -test.timeout=20m -failfast -v -test.run TestBaseSuite -testify.m ^TestOpenAPIContractAndBusinessConformance` command.
+
+This test is a bit more complex than the previous ones. It first asks for an OpenAPI conformance test to be launched and then retrieves the 
+messages to check business conformance, following the same logic that was implemented into the Postman Collection snippet.
+
+It uses the `MessagesForTestCase()` function to retrieve the messages exchanged during the test and then checks the content. While this is done 
+in pure Go here, you may use the tool or library of your choice like [Cucumber](https://github.com/cucumber/godog) or others.
+
+
 [Next](step-5-write-async-tests.md)

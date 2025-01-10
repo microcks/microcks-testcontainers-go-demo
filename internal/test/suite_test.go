@@ -196,6 +196,38 @@ func (s *BaseSuite) TestPostmanCollectionContract() {
 	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
 }
 
+func (s *BaseSuite) TestOpenAPIContractAndBusinessConformance() {
+	ctx := context.Background()
+	// Test code goes here which can leverage the context
+	// Prepare a Microcks Test.
+	testRequest := client.TestRequest{
+		ServiceId:    "Order Service API:0.1.0",
+		RunnerType:   client.TestRunnerTypeOPENAPISCHEMA,
+		TestEndpoint: fmt.Sprintf("http://host.testcontainers.internal:%d/api", server.DefaultApplicationPort),
+		Timeout:      2000,
+	}
+	testResult, err := s.microcksEnsemble.GetMicrocksContainer().TestEndpoint(ctx, &testRequest)
+	s.Require().NoError(err)
+
+	s.T().Logf("Test Result success is %t", testResult.Success)
+
+	// Log TestResult raw structure.
+	j, err := json.Marshal(testResult)
+	s.Require().NoError(err)
+	s.T().Log(string(j))
+
+	s.True(testResult.Success)
+	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
+
+	// You may also check business conformance.
+	pairs, err := s.microcksEnsemble.GetMicrocksContainer().MessagesForTestCase(ctx, testResult, "POST /orders")
+	s.Require().NoError(err)
+
+	for _, pair := range *pairs {
+		s.T().Logf("Got a responseBody %s", *pair.Response.Content)
+	}
+}
+
 func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
 	ctx := context.Background()
 	// Prepare a Microcks Tests.
@@ -252,6 +284,26 @@ func (s *BaseSuite) TestOrderEventIsPublishedWhenOrderIsCreated() {
 
 	s.Require().True(testResult.Success)
 	s.Equal(1, len(*testResult.TestCaseResults)) //nolint:testifylint
+
+	// Check the content of the emitted event, read from Kafka topic.
+	events, err := s.microcksEnsemble.GetMicrocksContainer().EventMessagesForTestCase(ctx, testResult, "SUBSCRIBE orders-created")
+	s.Require().NoError(err)
+
+	s.Equal(1, len(*events)) //nolint:testifylint
+
+	message := (*events)[0].EventMessage
+	var messageMap map[string]interface{}
+	err = json.Unmarshal([]byte(*message.Content), &messageMap)
+	s.Require().NoError(err)
+
+	s.Equal("Creation", messageMap["changeReason"].(string))
+
+	orderMap := messageMap["order"].(map[string]interface{})
+	s.Equal("123-456-789", orderMap["customerId"].(string))
+	s.Equal(8.4, orderMap["totalPrice"].(float64))
+
+	productQuantities := orderMap["productQuantities"].([]interface{})
+	s.Equal(2, len(productQuantities)) //nolint:testifylint
 }
 
 func (s *BaseSuite) TestEventIsConsumedAndProcessedByService() {
