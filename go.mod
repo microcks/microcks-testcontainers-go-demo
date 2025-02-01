@@ -10,7 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
-	microcks.io/go-client v0.3.0
+	microcks.io/go-client v0.3.1
 	microcks.io/testcontainers-go v0.3.1
 )
 
