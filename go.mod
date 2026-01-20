@@ -1,6 +1,7 @@
 module github.com/microcks/microcks-testcontainers-go-demo
 
 go 1.22.1
+toolchain go1.24.1
 
 //replace microcks.io/testcontainers-go => ../microcks-testcontainers-go
 
@@ -10,7 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
-	microcks.io/go-client v0.3.0
+	microcks.io/go-client v0.3.1
 	microcks.io/testcontainers-go v0.3.1
 )
 
